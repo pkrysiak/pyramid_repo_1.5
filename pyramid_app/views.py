@@ -80,3 +80,12 @@ def res_view(request):
                 'allegro_price_mode' : all_mode,
                 'nokaut_price_mode' : nok_mode
         }
+
+@view_config(route_name = 'history', renderer = 'pyramid_app:templates/history.mako')
+def history_view(request):
+    return {'search_list': ['a','b','c']}
+
+
+
+
+

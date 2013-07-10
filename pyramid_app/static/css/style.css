@@ -362,3 +362,19 @@ body {
 }
 
 /* << Bootstrap */
+
+/* my add ons */
+
+.outer {
+    padding: 10px 5px 10px 5px;
+    margin-left: 10px;
+}
+
+.gimme_some_space{
+    padding: 10px 10px 10px 10px;
+}
+
+.i_want_some_space_too{
+    padding: 10px 0px 10px 0px;
+    margin-left: 35px;
+}
