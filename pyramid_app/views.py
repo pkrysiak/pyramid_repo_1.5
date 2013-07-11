@@ -68,9 +68,13 @@ def history_view(request):
 
 @view_config(route_name = 'login', renderer = 'pyramid_app:templates/login.mako')
 def login_view(request):
+    print request
     return {}
 
 @view_config(route_name = 'register', renderer = 'pyramid_app:templates/register.mako')
 def register_view(request):
+    if request.method == 'POST':
+        print request.GET.get('login'), request.GET.get('password'), request.GET.get('confirm_password')
+
     return {}
 
