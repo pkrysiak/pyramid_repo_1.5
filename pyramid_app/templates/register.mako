@@ -23,7 +23,10 @@
             <div class="middle">
                 <div class="form_login">
                     <div class="head_login">Register</div>
-                    <form method="post" action="/register">
+                    % if error:
+                            <p style="color: red"> ${error} </p>
+                    % endif
+                    <form id="reg_form" method="post" action="/register">
                         <input class="input_text" type="text" name="login" value="login"/>
                         <input class="input_text" type="password" name="password" value="password"/>
                         <input class="input_text" type="password" name="confirm_password" value="password"/>

@@ -5,13 +5,19 @@ from allegro.lib import allegro_api, NoItemException as AllegroNoItemEx
 from nokaut.lib import nokaut_api, NoItemException as NokautNoItemEx
 
 from sqlalchemy.exc import DBAPIError
+from sqlalchemy import and_
 
 from .models import (
     DBSession,
     UsersTable,
-    SearchTable
+    # SearchTable
     )
 
+from pyramid.security import (
+    remember,
+    forget,
+    authenticated_userid
+    )
 
 @view_config(route_name='home', renderer='pyramid_app:templates/base.mako')
 def my_view(request):
@@ -66,15 +72,67 @@ def res_view(request):
 def history_view(request):
     return {'search_list': [('name1','price1','link1'),('name2','price2','link2'),('name3','price3','link3')]}
 
+
+
 @view_config(route_name = 'login', renderer = 'pyramid_app:templates/login.mako')
 def login_view(request):
-    print request
-    return {}
+    resp = {
+        'error' : False
+    }
+    if request.method == 'POST':
+        login, passwd = request.POST.get('login'), request.POST.get('password')
+        user = DBSession.query(UsersTable).filter(and_(UsersTable.username == login)).first()
+        try:
+            passwd = user.password
+        except AttributeError:
+            passwd = None
+        # print '->>>>>>>>',user, passwd
+        if user is None:
+            resp['error'] = 'No such user..'
+        elif passwd is None:
+            resp['error'] = 'Wrong password..'
+        else:
+            headers = remember(request, user.id)
+            # cos tutaj
+    return resp
 
 @view_config(route_name = 'register', renderer = 'pyramid_app:templates/register.mako')
 def register_view(request):
+    resp = {
+        'error' : False
+    }
+    login, passwd, conf_passwd = request.POST.get('login'), request.POST.get('password'), request.POST.get('confirm_password')
+
+    # import ipdb;ipdb.set_trace()
     if request.method == 'POST':
-        print request.GET.get('login'), request.GET.get('password'), request.GET.get('confirm_password')
+        log = DBSession.query(UsersTable).filter(UsersTable.username == login).first()
+        data = [item.to_str() for item in DBSession.query(UsersTable).all()]
+        print 'log' , log, data
+        if passwd != conf_passwd:
+            resp['error'] = 'Passwords does not match..'
+            return resp
+        elif len(passwd) < 4:
+            resp['error'] = 'Passwords is too short..'
+        elif len(login) < 4:
+            resp['error'] = 'Login is too short..'
+        elif log is not None:
+            resp['error'] = 'Login alredy taken, try another one..'
+        else:
+            new_user = UsersTable(login, passwd, 'viewer')
+            print new_user.id
+            DBSession.add(new_user)
+            user_id = DBSession.query(UsersTable).filter(UsersTable.username == new_user.username).first().id
+            headers = remember(request, user_id)
+            # cos tu dalej jeszcze trzeba
+        return resp
 
-    return {}
+    else:
+        return resp
 
+@view_config(route_name = 'user_list', renderer = 'pyramid_app:templates/user_list.mako')
+def user_list_view(request):
+    u_list = DBSession.query(UsersTable).all()
+    users = [user.to_str() for user in u_list]
+    print users
+
+    return {'user_list': users}

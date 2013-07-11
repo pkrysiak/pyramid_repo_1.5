@@ -39,17 +39,20 @@ class UsersTable(Base):
     password = Column(Text, nullable = False)
     group = Column(Text, nullable = False)
 
-    child = orm.relationship('search', cascade = 'all,delete,delete-orphan')
+    # child = orm.relationship('search', cascade = 'all,delete,delete-orphan')
 
-    def __init__(self, username, password, search):
+    def __init__(self, username, password, group):
         self.username = username
-        self.search = search
         self.password = password
+        self.group = group
 
-class SearchTable(Base):
-    __tablename__ = 'search'
-    search_id = Column(Integer, ForeignKey('users.id', ondelete = 'CASCADE'), primary_key = True)
-    search_content = Column(Text)
+    def to_str(self):
+        return str(self.id), self.username, self.password, self.group
 
-    def __init__(self, search_content):
-        self.search_content = search_content
+# class SearchTable(Base):
+#     __tablename__ = 'search'
+#     search_id = Column(Integer, ForeignKey('users.id', ondelete = 'CASCADE'), primary_key = True)
+#     search_content = Column(Text)
+#
+#     def __init__(self, search_content):
+#         self.search_content = search_content

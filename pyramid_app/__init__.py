@@ -32,5 +32,6 @@ def main(global_config, **settings):
     config.add_route('history', '/history')
     config.add_route('login', '/login')
     config.add_route('register', '/register')
+    config.add_route('user_list', '/user_list')
     config.scan()
     return config.make_wsgi_app()

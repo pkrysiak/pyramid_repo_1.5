@@ -12,7 +12,7 @@ from pyramid.paster import (
 from ..models import (
     DBSession,
     UsersTable,
-    SearchTable,
+    # SearchTable,
     Base,
     )
 
@@ -35,5 +35,6 @@ def main(argv=sys.argv):
     Base.metadata.create_all(engine)
     with transaction.manager:
         pass
-        # model = MyModel(name='one', value=1)
-        # DBSession.add(model)
+        # m = UsersTable('adam','kowalski','admin')
+        # # model = MyModel(name='one', value=1)
+        # DBSession.add(m)
