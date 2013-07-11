@@ -64,9 +64,13 @@ def res_view(request):
 
 @view_config(route_name = 'history', renderer = 'pyramid_app:templates/history.mako')
 def history_view(request):
-    return {'search_list': ['a','b','c']}
+    return {'search_list': [('name1','price1','link1'),('name2','price2','link2'),('name3','price3','link3')]}
 
+@view_config(route_name = 'login', renderer = 'pyramid_app:templates/login.mako')
+def login_view(request):
+    return {}
 
-
-
+@view_config(route_name = 'register', renderer = 'pyramid_app:templates/register.mako')
+def register_view(request):
+    return {}
 

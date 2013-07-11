@@ -3,6 +3,7 @@ from sqlalchemy import (
     Integer,
     Text,
     ForeignKey,
+    orm
     )
 
 from sqlalchemy.ext.declarative import declarative_base
@@ -21,15 +22,19 @@ class UsersTable(Base):
     __tablename__ = 'users'
     id  = Column(Integer, primary_key = True, nullable = False, autoincrement = True)
     username = Column(Text, unique = True, nullable = False)
-    search = Column(Text)
+    password = Column(Text, nullable = False)
+    group = Column(Text, nullable = False)
 
-    def __init__(self, username, search):
+    child = orm.relationship('search', cascade = 'all,delete,delete-orphan')
+
+    def __init__(self, username, password, search):
         self.username = username
         self.search = search
+        self.password = password
 
 class SearchTable(Base):
     __tablename__ = 'search'
-    search_id = Column(Integer, ForeignKey('users.id'), primary_key = True)
+    search_id = Column(Integer, ForeignKey('users.id', ondelete = 'CASCADE'), primary_key = True)
     search_content = Column(Text)
 
     def __init__(self, search_content):

@@ -2,17 +2,14 @@
 <%inherit file="base.mako"/>
 
 <%block name = "content">
-    <div class="outer">
-        <div class="main_box">
-            <div class="gimme_some_space">
-                <p class="name_list">History:</p>
-                <ul class="i_want_some_space_too">
-                    % for search in search_list:
-                        <li> - ${search} </li>
-                    % endfor
-                </ul>
-
-            </div>
-        </div>
-    </div>
+    <table cellpadding="0" celllspacing="0" border="0" class="list">
+            %for name, price, link in search_list:
+                <tr>
+                    <td class="thumb"><!-- <img src="http://image.ceneo.pl/data/products/19719012/f-asus-x501a-xx145h.jpg" alt="img_demo"/> --></td>
+                    <td class="name_list">${name}</td>
+                    <td class="price_list">${price} zł</td>
+                    <td class="more"><a href="${link}" class="link_more btn">Zobacz</a></td>
+                </tr>
+            %endfor
+    </table>
 </%block>
