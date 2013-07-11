@@ -74,7 +74,7 @@ def history_view(request):
 
 
 
-@view_config(route_name = 'login', renderer = 'pyramid_app:templates/login.mako')
+@view_config(route_name = 'login', renderer = 'pyramid_app:templates/login.mako', permission = 'all')
 def login_view(request):
     resp = {
         'error' : False
@@ -93,10 +93,11 @@ def login_view(request):
             resp['error'] = 'Wrong password..'
         else:
             headers = remember(request, user.id)
+            print '------->',headers
             # cos tutaj
     return resp
 
-@view_config(route_name = 'register', renderer = 'pyramid_app:templates/register.mako')
+@view_config(route_name = 'register', renderer = 'pyramid_app:templates/register.mako', permission = 'all')
 def register_view(request):
     resp = {
         'error' : False
