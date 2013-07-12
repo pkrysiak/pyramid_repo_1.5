@@ -15,29 +15,17 @@
                     <div class="logo_txt_small">We will help you find and compare products</div>
                 </div>
                 <div class="box_login">
-                    % if register_login_mode:
+                    % if not logged:
                         <a class="btn btn-success" href="/register">Register</a>
                         <a class="btn" href="/login">Login</a>
-                    % endif
-                    %if logout_mode:
+                    %else:
                         <a class="btn" href="/logout">Logout</a>
                     %endif
                 </div>
             </div>
             <div class="middle">
-                <div class="box_search">
-                    <form action="/search">
-                        <div class="search">
-                            <input type="text" name="search_field" value="enter a product name"/>
-                        </div>
-                        <button class="btn_search btn btn-primary" type=submit>Search</button>
-                    </form>
-                    <a class="btn" href="/top_search">Top 3 searched</a>
-                    % if logout_mode:
-                        <a class="btn" href="/history">History</a>
-                    % endif
-                    <div class="clear"></div>
-                </div>
+                <%block name="search_box"> </%block>
+                <%block name="login_form"> </%block>
                 <%block name="content"> </%block>
             </div>
         </div>

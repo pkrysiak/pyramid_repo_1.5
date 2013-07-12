@@ -17,17 +17,11 @@ from pyramid.security import (
     authenticated_userid,
     )
 
-@view_config(route_name='home', renderer='pyramid_app:templates/base.mako')
+@view_config(route_name='home', renderer='pyramid_app:templates/search_box.mako')
 def my_view(request):
 
-    resp = {}
     user_id =  authenticated_userid(request)
-    if not user_id:
-        resp['register_login_mode'] = True
-    else:
-        resp['register_login_mode'] = False
-        resp['logout_mode'] = True
-    return resp
+    return {'logged' : user_id}
 
 
 @view_config(route_name = 'search', renderer = 'pyramid_app:templates/search.mako')
@@ -71,8 +65,7 @@ def res_view(request):
             DBSession.add(search)
 
     return {
-            'register_login_mode' : True if user_id == None else False,
-            'logout_mode': True if user_id != None else False,
+            'logged': user_id,
             'product_name' : search_phrase,
             'allegro_link' : all_link,
             'nokaut_link' : nok_link,
@@ -88,8 +81,7 @@ def history_view(request):
     user_hist = DBSession.query(SearchTable).filter(SearchTable.search_id == user_id).all()
     hist = [item.to_str() for item in user_hist]
 
-    return {'register_login_mode' : True if user_id == None else False,
-            'logout_mode': True if user_id != None else False,
+    return {'logged' : user_id,
             'search_list': hist
     }
 
@@ -100,8 +92,7 @@ def top_search_view(request):
     top_res = [(item[1], item[-1]) for item in top_search]
     user_id = authenticated_userid(request)
 
-    return {'register_login_mode' : True if user_id == None else False,
-            'logout_mode': True if user_id != None else False,
+    return {'logged' : user_id,
             'top_search' : top_res
     }
 
