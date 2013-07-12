@@ -8,10 +8,6 @@ from .models import (
     Base,
     )
 
-from pyramid.security import (
-Allow,
-Everyone,
-)
 
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
@@ -34,5 +30,6 @@ def main(global_config, **settings):
     config.add_route('logout', '/logout')
     config.add_route('register', '/register')
     config.add_route('user_list', '/user_list')
+    config.add_route('top_search', '/top_search')
     config.scan()
     return config.make_wsgi_app()

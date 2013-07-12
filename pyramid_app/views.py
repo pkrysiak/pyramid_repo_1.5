@@ -1,11 +1,9 @@
-from pyramid.response import Response
 from pyramid.view import view_config
-from pyramid.httpexceptions import HTTPNotFound,HTTPFound
+from pyramid.httpexceptions import HTTPFound
 from allegro.lib import allegro_api, NoItemException as AllegroNoItemEx
 from nokaut.lib import nokaut_api, NoItemException as NokautNoItemEx
 
-from sqlalchemy.exc import DBAPIError
-from sqlalchemy import and_
+from sqlalchemy import and_,desc
 
 from .models import (
     DBSession,
@@ -17,7 +15,6 @@ from pyramid.security import (
     remember,
     forget,
     authenticated_userid,
-    unauthenticated_userid
     )
 
 @view_config(route_name='home', renderer='pyramid_app:templates/base.mako')
@@ -30,10 +27,6 @@ def my_view(request):
     else:
         resp['register_login_mode'] = False
         resp['logout_mode'] = True
-    # try:
-    #     one = DBSession.query(MyModel).filter(MyModel.name == 'one').first()
-    # except DBAPIError:
-    #     return Response('db not working', content_type='text/plain', status_int=500)
     return resp
 
 
@@ -66,6 +59,7 @@ def res_view(request):
         if all_price < nok_price:
             all_mode, nok_mode = 'win', ''
         elif all_price > nok_price:
+
             all_mode, nok_mode = '', 'win'
 
     if user_id is not None:
@@ -73,10 +67,12 @@ def res_view(request):
         if prev is not None:
             prev.search_quantity += 1
         else:
-            search = SearchTable(user_id,search_phrase, 0)
+            search = SearchTable(user_id,search_phrase, all_link or '#', all_price or 0, nok_link or '#', nok_price or 0, 0)
             DBSession.add(search)
 
     return {
+            'register_login_mode' : True if user_id == None else False,
+            'logout_mode': True if user_id != None else False,
             'product_name' : search_phrase,
             'allegro_link' : all_link,
             'nokaut_link' : nok_link,
@@ -88,8 +84,26 @@ def res_view(request):
 
 @view_config(route_name = 'history', renderer = 'pyramid_app:templates/history.mako')
 def history_view(request):
-    return {'search_list': [('name1','price1','link1'),('name2','price2','link2'),('name3','price3','link3')]}
+    user_id =  authenticated_userid(request)
+    user_hist = DBSession.query(SearchTable).filter(SearchTable.search_id == user_id).all()
+    hist = [item.to_str() for item in user_hist]
 
+    return {'register_login_mode' : True if user_id == None else False,
+            'logout_mode': True if user_id != None else False,
+            'search_list': hist
+    }
+
+@view_config(route_name = 'top_search', renderer = 'pyramid_app:templates/top.mako')
+def top_search_view(request):
+    top = DBSession.query(SearchTable).order_by(desc(SearchTable.search_quantity))
+    top_search = [item.to_str() for item in top[:3]]
+    top_res = [(item[1], item[-1]) for item in top_search]
+    user_id = authenticated_userid(request)
+
+    return {'register_login_mode' : True if user_id == None else False,
+            'logout_mode': True if user_id != None else False,
+            'top_search' : top_res
+    }
 
 
 @view_config(route_name = 'login', renderer = 'pyramid_app:templates/login.mako')
@@ -100,14 +114,13 @@ def login_view(request):
     if request.method == 'POST':
         login, passwd = request.POST.get('login'), request.POST.get('password')
         user = DBSession.query(UsersTable).filter(and_(UsersTable.username == login, UsersTable.password == passwd)).first()
-        # print '->>>>>>>>',user, passwd
+
         if user is None:
             resp['error'] = 'Wrong login or password..'
         else:
             headers = remember(request, user.id)
-            # import ipdb;ipdb.set_trace()
-
             return HTTPFound(location = '/', headers = headers)
+
     return resp
 
 @view_config(route_name = 'logout', renderer = 'pyramid_app:templates/base.mako')
@@ -125,7 +138,7 @@ def register_view(request):
 
     if request.method == 'POST':
         log = DBSession.query(UsersTable).filter(UsersTable.username == login).first()
-        # data = [item.to_str() for item in DBSession.query(UsersTable).all()]
+
         if passwd != conf_passwd:
             resp['error'] = 'Passwords does not match..'
             return resp
@@ -146,9 +159,10 @@ def register_view(request):
 
 @view_config(route_name = 'user_list', renderer = 'pyramid_app:templates/user_list.mako')
 def user_list_view(request):
+    """ ZROBIONE TYLKO W CELU PODGLADU ..
+    """
     u_list = DBSession.query(UsersTable).all()
     users = [user.to_str() for user in u_list]
     history_ = DBSession.query(SearchTable).all()
     hist = [item.to_str() for item in history_]
-    print hist
-    return {'user_list': users}
+    return {'user_list': users, 'hist': hist}

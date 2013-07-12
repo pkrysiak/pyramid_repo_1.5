@@ -32,7 +32,10 @@
                         </div>
                         <button class="btn_search btn btn-primary" type=submit>Search</button>
                     </form>
-                    <a class="btn" href="/history">Historia wyszukiwania</a>
+                    <a class="btn" href="/top_search">Top 3 searched</a>
+                    % if logout_mode:
+                        <a class="btn" href="/history">History</a>
+                    % endif
                     <div class="clear"></div>
                 </div>
                 <%block name="content"> </%block>

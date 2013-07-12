@@ -1,6 +1,7 @@
 from sqlalchemy import (
     Column,
     Integer,
+    Float,
     Text,
     ForeignKey,
     orm
@@ -37,12 +38,20 @@ class SearchTable(Base):
     __tablename__ = 'search'
     search_id = Column(Integer, primary_key = True)
     search_content = Column(Text, primary_key = True, nullable = False)
+    all_link = Column(Text, nullable = False)
+    all_price = Column(Float, nullable = False)
+    nok_link = Column(Text, nullable = False)
+    nok_price = Column(Float, nullable = False)
     search_quantity = Column(Integer, nullable = False)
 
-    def __init__(self, user_id, search_content, search_quantity):
-        self.search_content = search_content
+    def __init__(self, user_id, search_content, all_link, all_price, nok_link, nok_price, search_quantity):
         self.search_id = user_id
+        self.search_content = search_content
+        self.all_link = all_link
+        self.all_price = all_price
+        self.nok_link = nok_link
+        self.nok_price = nok_price
         self.search_quantity = search_quantity
 
     def to_str(self):
-        return str(self.search_id), self.search_content, str(self.search_quantity)
+        return str(self.search_id), self.search_content, self.all_link, self.all_price, self.nok_link, self.nok_price, str(self.search_quantity)
