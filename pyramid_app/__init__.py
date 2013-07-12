@@ -13,15 +13,10 @@ Allow,
 Everyone,
 )
 
-def _fk_pragma_on_connect(dbapi_con, con_record):
-    dbapi_con.execute('pragma foreign_keys=ON')
-
-
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
     engine = engine_from_config(settings, 'sqlalchemy.')
-    event.listen(engine, 'connect', _fk_pragma_on_connect)
     DBSession.configure(bind=engine)
     Base.metadata.bind = engine
     authn_policy = AuthTktAuthenticationPolicy('sosecret')
@@ -36,6 +31,7 @@ def main(global_config, **settings):
     config.add_route('search','/search')
     config.add_route('history', '/history')
     config.add_route('login', '/login')
+    config.add_route('logout', '/logout')
     config.add_route('register', '/register')
     config.add_route('user_list', '/user_list')
     config.scan()
