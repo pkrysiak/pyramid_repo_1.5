@@ -1,6 +1,6 @@
 from pyramid.response import Response
 from pyramid.view import view_config
-from pyramid.httpexceptions import HTTPNotFound
+from pyramid.httpexceptions import HTTPNotFound,HTTPFound
 from allegro.lib import allegro_api, NoItemException as AllegroNoItemEx
 from nokaut.lib import nokaut_api, NoItemException as NokautNoItemEx
 
@@ -16,11 +16,14 @@ from .models import (
 from pyramid.security import (
     remember,
     forget,
-    authenticated_userid
+    authenticated_userid,
+    unauthenticated_userid
     )
 
 @view_config(route_name='home', renderer='pyramid_app:templates/base.mako')
 def my_view(request):
+    print request.headers.items()
+    authenticated_userid(request)
     # try:
     #     one = DBSession.query(MyModel).filter(MyModel.name == 'one').first()
     # except DBAPIError:
@@ -74,7 +77,7 @@ def history_view(request):
 
 
 
-@view_config(route_name = 'login', renderer = 'pyramid_app:templates/login.mako', permission = 'all')
+@view_config(route_name = 'login', renderer = 'pyramid_app:templates/login.mako')
 def login_view(request):
     resp = {
         'error' : False
@@ -93,11 +96,12 @@ def login_view(request):
             resp['error'] = 'Wrong password..'
         else:
             headers = remember(request, user.id)
-            print '------->',headers
-            # cos tutaj
+            import ipdb;ipdb.set_trace()
+
+            return HTTPFound(location = '/', headers = headers)
     return resp
 
-@view_config(route_name = 'register', renderer = 'pyramid_app:templates/register.mako', permission = 'all')
+@view_config(route_name = 'register', renderer = 'pyramid_app:templates/register.mako')
 def register_view(request):
     resp = {
         'error' : False
@@ -120,10 +124,11 @@ def register_view(request):
             resp['error'] = 'Login alredy taken, try another one..'
         else:
             new_user = UsersTable(login, passwd, 'viewer')
-            print new_user.id
+            # print new_user.id
             DBSession.add(new_user)
             user_id = DBSession.query(UsersTable).filter(UsersTable.username == new_user.username).first().id
             headers = remember(request, user_id)
+            print 'user id:', user_id, headers
             # cos tu dalej jeszcze trzeba
         return resp
 
@@ -134,6 +139,6 @@ def register_view(request):
 def user_list_view(request):
     u_list = DBSession.query(UsersTable).all()
     users = [user.to_str() for user in u_list]
-    print users
+    # print users
 
     return {'user_list': users}
