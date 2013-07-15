@@ -35,6 +35,3 @@ def main(argv=sys.argv):
     Base.metadata.create_all(engine)
     with transaction.manager:
         pass
-        # m = UsersTable('adam','kowalski','admin')
-        # # model = MyModel(name='one', value=1)
-        # DBSession.add(m)

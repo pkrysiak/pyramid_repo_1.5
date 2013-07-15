@@ -5,8 +5,8 @@
     <div class="form_login">
             <div class="head_login">Login in</div>
             % if errors:
-                %for field, error in errors.items():
-                    <p id="red"> bad ${field}, ${error} </p>
+                %for error in errors:
+                    <p id="red"> ${error} </p>
                 %endfor
             % endif
             <form method="post" action="/login">

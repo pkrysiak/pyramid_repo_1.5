@@ -108,11 +108,8 @@ def history_view(request):
              renderer = 'pyramid_app:templates/top.mako',
              permission = 'view')
 def top_search_view(request):
-    top_search = DBSession.query(UserSearch).order_by(
-                                            desc(
-                                                UserSearch.search_quantity
-                                            )
-    ).limit(3)
+    top_search = DBSession.query(UserSearch).\
+                        order_by(desc(UserSearch.search_quantity)).limit(3)
 
     return {
         'top_search' : top_search
@@ -140,7 +137,7 @@ def login_view(request):
         return HTTPFound(location = '/', headers = headers)
     else:
         return {
-            'errors' : form.errors
+            'errors' : set(form.errors.values())
         }
 
 
@@ -178,7 +175,9 @@ def register_view(request):
 
         return  HTTPFound('/', headers = headers)
     else:
-        return {'errors' : form.errors}
+        return {
+            'errors' : set(form.errors.values())
+        }
 
 
 @view_config(route_name = 'user_list',
