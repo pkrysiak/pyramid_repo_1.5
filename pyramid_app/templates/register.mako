@@ -4,8 +4,10 @@
 <%block name="login_form">
     <div class="form_login">
         <div class="head_login">Register</div>
-        % if error:
-                <p style="color: red"> ${error} </p>
+        % if errors:
+            %for field, error in errors.items():
+                <p id="red"> bad ${field}, ${error} </p>
+            %endfor
         % endif
         <form id="reg_form" method="post" action="/register">
             <input class="input_text" type="text" name="login" value="login"/>

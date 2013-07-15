@@ -10,7 +10,7 @@
                 <button class="btn_search btn btn-primary" type=submit>Search</button>
             </form>
             <a class="btn" href="/top_search">Top 3 searched</a>
-            % if logged:
+            % if request.user:
                 <a class="btn" href="/history">History</a>
             % endif
             <div class="clear"></div>

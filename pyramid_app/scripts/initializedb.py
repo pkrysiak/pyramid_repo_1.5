@@ -11,8 +11,8 @@ from pyramid.paster import (
 
 from ..models import (
     DBSession,
-    UsersTable,
-    # SearchTable,
+    User,
+    UserSearch,
     Base,
     )
 

@@ -380,6 +380,12 @@ body {
     margin-left: 35px;
 }
 
+#red {
+    color: red;
+}
+#upper_space {
+    margin-top: 15px;
+}
 /* >> Box login */
 .input_text {
     font-size: 0.8em;

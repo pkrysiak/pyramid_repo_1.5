@@ -2,33 +2,41 @@ from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound
 from allegro.lib import allegro_api, NoItemException as AllegroNoItemEx
 from nokaut.lib import nokaut_api, NoItemException as NokautNoItemEx
-
+from forms import RegisterForm, LoginForm
+from pyramid_simpleform import Form
 from sqlalchemy import and_,desc
 
 from .models import (
     DBSession,
-    UsersTable,
-    SearchTable
+    User,
+    UserSearch
     )
 
 from pyramid.security import (
     remember,
     forget,
     authenticated_userid,
+    NO_PERMISSION_REQUIRED
     )
 
-@view_config(route_name='home', renderer='pyramid_app:templates/search_box.mako')
+def get_user(request):
+    user_id = authenticated_userid(request)
+    if user_id is not None:
+        return DBSession.query(User).filter(User.id == user_id).first()
+
+
+@view_config(route_name='home',
+             renderer='pyramid_app:templates/search_box.mako')
 def my_view(request):
-
-    user_id =  authenticated_userid(request)
-    return {'logged' : user_id}
+    return {}
 
 
-@view_config(route_name = 'search', renderer = 'pyramid_app:templates/search.mako')
+@view_config(route_name = 'search',
+             renderer = 'pyramid_app:templates/search.mako')
 def res_view(request):
     search_phrase = request.GET.get('search_field')
     nokaut_key = request.registry.settings.get('nokaut.key')
-    user_id =  authenticated_userid(request)
+    user = request.user
 
     try :
         all = allegro_api(search_phrase)
@@ -36,124 +44,152 @@ def res_view(request):
         all = (None, None)
 
     try:
-        nok = nokaut_api(search_phrase,nokaut_key)
+        nok = nokaut_api(search_phrase, nokaut_key)
     except NokautNoItemEx:
         nok = (None, None)
 
     nok_price, nok_link = nok[1], nok[0]
     all_price, all_link = all[1], all[0]
 
-    if (nok_price == None and all_price == None) or (nok_price == all_price):
-        all_mode, nok_mode = '', ''
-    elif nok_price != None and all_price == None:
-        all_mode, nok_mode = '', 'win'
-    elif nok_price == None and all_price != None:
-        all_mode, nok_mode = 'win', ''
-    else :
+    mode = None
+    if all_price and nok_price:
         if all_price < nok_price:
-            all_mode, nok_mode = 'win', ''
+            mode = 'allegro'
         elif all_price > nok_price:
+            mode = 'nokaut'
+    elif all_price:
+        mode = 'allegro'
+    elif nok_price:
+        mode = 'nokaut'
 
-            all_mode, nok_mode = '', 'win'
-
-    if user_id is not None:
-        prev = DBSession.query(SearchTable).filter(and_(SearchTable.search_id == user_id, SearchTable.search_content == search_phrase)).first()
+    if user.id is not None:
+        prev = DBSession.query(UserSearch).\
+                filter(and_(UserSearch.search_id == user.id,
+                            UserSearch.search_content == search_phrase)).first()
         if prev is not None:
             prev.search_quantity += 1
         else:
-            search = SearchTable(user_id,search_phrase, all_link or '#', all_price or 0, nok_link or '#', nok_price or 0, 0)
+            search = UserSearch(
+                                 search_id = user.id,
+                                 search_content = search_phrase,
+                                 all_link = all_link or '#',
+                                 all_price = all_price or 0,
+                                 nok_link = nok_link or '#',
+                                 nok_price = nok_price or 0,
+                                 search_quantity = 1
+            )
             DBSession.add(search)
 
     return {
-            'logged': user_id,
             'product_name' : search_phrase,
             'allegro_link' : all_link,
             'nokaut_link' : nok_link,
             'allegro_price' : all_price,
             'nokaut_price' : nok_price,
-            'allegro_price_mode' : all_mode,
-            'nokaut_price_mode' : nok_mode
+            'won' : mode
         }
 
-@view_config(route_name = 'history', renderer = 'pyramid_app:templates/history.mako')
+
+@view_config(route_name = 'history',
+             renderer = 'pyramid_app:templates/history.mako',
+             permission = 'view')
+
 def history_view(request):
     user_id =  authenticated_userid(request)
-    user_hist = DBSession.query(SearchTable).filter(SearchTable.search_id == user_id).all()
-    hist = [item.to_str() for item in user_hist]
+    user_hist = DBSession.query(UserSearch).\
+                                filter(UserSearch.search_id == user_id).all()
 
-    return {'logged' : user_id,
-            'search_list': hist
+    return {
+        'user_hist': user_hist
     }
 
-@view_config(route_name = 'top_search', renderer = 'pyramid_app:templates/top.mako')
+
+@view_config(route_name = 'top_search',
+             renderer = 'pyramid_app:templates/top.mako',
+             permission = 'view')
 def top_search_view(request):
-    top = DBSession.query(SearchTable).order_by(desc(SearchTable.search_quantity))
-    top_search = [item.to_str() for item in top[:3]]
-    top_res = [(item[1], item[-1]) for item in top_search]
-    user_id = authenticated_userid(request)
+    top_search = DBSession.query(UserSearch).order_by(
+                                            desc(
+                                                UserSearch.search_quantity
+                                            )
+    ).limit(3)
 
-    return {'logged' : user_id,
-            'top_search' : top_res
+    return {
+        'top_search' : top_search
     }
 
 
-@view_config(route_name = 'login', renderer = 'pyramid_app:templates/login.mako')
+@view_config(route_name = 'login',
+             renderer = 'pyramid_app:templates/login.mako',
+             permission = NO_PERMISSION_REQUIRED)
 def login_view(request):
-    resp = {
-        'error' : False
-    }
-    if request.method == 'POST':
-        login, passwd = request.POST.get('login'), request.POST.get('password')
-        user = DBSession.query(UsersTable).filter(and_(UsersTable.username == login, UsersTable.password == passwd)).first()
 
-        if user is None:
-            resp['error'] = 'Wrong login or password..'
-        else:
-            headers = remember(request, user.id)
-            return HTTPFound(location = '/', headers = headers)
+    form = Form(request, schema = LoginForm)
 
-    return resp
+    if request.method == 'POST' and form.validate():
 
-@view_config(route_name = 'logout', renderer = 'pyramid_app:templates/base.mako')
+        user = DBSession.query(User).filter(
+                                and_(
+                                    User.username == form.data['login'],
+                                    User.password == form.data['password']
+                                )
+        ).first()
+
+
+        headers = remember(request, user.id)
+        return HTTPFound(location = '/', headers = headers)
+    else:
+        return {
+            'errors' : form.errors
+        }
+
+
+@view_config(route_name = 'logout',
+             renderer = 'pyramid_app:templates/base.mako')
 def logut_view(request):
     headers = forget(request)
-    return HTTPFound(location = '/', headers = headers)
+
+    return HTTPFound(
+        location = '/', headers = headers
+    )
 
 
-@view_config(route_name = 'register', renderer = 'pyramid_app:templates/register.mako')
+@view_config(route_name = 'register',
+             renderer = 'pyramid_app:templates/register.mako',
+             permission = NO_PERMISSION_REQUIRED)
 def register_view(request):
-    resp = {
-        'error' : False
-    }
-    login, passwd, conf_passwd = request.POST.get('login'), request.POST.get('password'), request.POST.get('confirm_password')
+    login = request.POST.get('login')
 
-    if request.method == 'POST':
-        log = DBSession.query(UsersTable).filter(UsersTable.username == login).first()
+    form = Form(request,
+                    schema = RegisterForm)
 
-        if passwd != conf_passwd:
-            resp['error'] = 'Passwords does not match..'
-            return resp
-        elif len(passwd) < 4:
-            resp['error'] = 'Passwords is too short..'
-        elif len(login) < 4:
-            resp['error'] = 'Login is too short..'
-        elif log is not None:
-            resp['error'] = 'Login alredy taken, try another one..'
-        else:
-            new_user = UsersTable(login, passwd, 'viewer')
-            DBSession.add(new_user)
-            user_id = DBSession.query(UsersTable).filter(UsersTable.username == new_user.username).first().id
-            headers = remember(request, user_id)
-            return  HTTPFound('/', headers = headers)
+    if request.method == 'POST' and form.validate():
+        new_user = User(
+                        username = form.data['login'],
+                        password = form.data['password'],
+                        group = 'viewer'
+        )
+        DBSession.add(new_user)
+
+        user_id = DBSession.query(User).\
+                    filter(User.username == new_user.username).first().id
+
+        headers = remember(request, user_id)
+
+        return  HTTPFound('/', headers = headers)
     else:
-        return resp
+        return {'errors' : form.errors}
 
-@view_config(route_name = 'user_list', renderer = 'pyramid_app:templates/user_list.mako')
+
+@view_config(route_name = 'user_list',
+             renderer = 'pyramid_app:templates/user_list.mako')
 def user_list_view(request):
     """ ZROBIONE TYLKO W CELU PODGLADU ..
     """
-    u_list = DBSession.query(UsersTable).all()
-    users = [user.to_str() for user in u_list]
-    history_ = DBSession.query(SearchTable).all()
-    hist = [item.to_str() for item in history_]
-    return {'user_list': users, 'hist': hist}
+    users = DBSession.query(User).all()
+    history = DBSession.query(UserSearch).all()
+
+    return {
+        'users': users,
+        'history': history
+    }
