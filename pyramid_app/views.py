@@ -62,7 +62,7 @@ def res_view(request):
     elif nok_price:
         mode = 'nokaut'
 
-    if user.id is not None:
+    if user is not None:
         prev = DBSession.query(UserSearch).\
                 filter(and_(UserSearch.search_id == user.id,
                             UserSearch.search_content == search_phrase)).first()
