@@ -25,14 +25,18 @@ def get_user(request):
         return DBSession.query(User).filter(User.id == user_id).first()
 
 
-@view_config(route_name='home',
-             renderer='pyramid_app:templates/search_box.mako')
+@view_config(
+    route_name='home',
+    renderer='pyramid_app:templates/search_box.mako'
+)
 def my_view(request):
     return {}
 
 
-@view_config(route_name = 'search',
-             renderer = 'pyramid_app:templates/search.mako')
+@view_config(
+    route_name = 'search',
+    renderer = 'pyramid_app:templates/search.mako'
+)
 def res_view(request):
     search_phrase = request.GET.get('search_field')
     nokaut_key = request.registry.settings.get('nokaut.key')
@@ -63,41 +67,44 @@ def res_view(request):
         mode = 'nokaut'
 
     if user is not None:
-        prev = DBSession.query(UserSearch).\
-                filter(and_(UserSearch.search_id == user.id,
-                            UserSearch.search_content == search_phrase)).first()
+        prev = DBSession.query(UserSearch)\
+                        .filter(UserSearch.search_id == user.id)\
+                        .filter(UserSearch.search_content == search_phrase).first()
+
         if prev is not None:
             prev.search_quantity += 1
         else:
             search = UserSearch(
-                                 search_id = user.id,
-                                 search_content = search_phrase,
-                                 all_link = all_link or '#',
-                                 all_price = all_price or 0,
-                                 nok_link = nok_link or '#',
-                                 nok_price = nok_price or 0,
-                                 search_quantity = 1
+                search_id = user.id,
+                search_content = search_phrase,
+                all_link = all_link or '#',
+                all_price = all_price or 0,
+                nok_link = nok_link or '#',
+                nok_price = nok_price or 0,
+                search_quantity = 1
             )
             DBSession.add(search)
 
     return {
-            'product_name' : search_phrase,
-            'allegro_link' : all_link,
-            'nokaut_link' : nok_link,
-            'allegro_price' : all_price,
-            'nokaut_price' : nok_price,
-            'won' : mode
+        'product_name' : search_phrase,
+        'allegro_link' : all_link,
+        'nokaut_link' : nok_link,
+        'allegro_price' : all_price,
+        'nokaut_price' : nok_price,
+        'won' : mode
         }
 
 
-@view_config(route_name = 'history',
-             renderer = 'pyramid_app:templates/history.mako',
-             permission = 'view')
+@view_config(
+    route_name = 'history',
+    renderer = 'pyramid_app:templates/history.mako',
+    permission = 'view'
+)
 
 def history_view(request):
     user_id =  authenticated_userid(request)
-    user_hist = DBSession.query(UserSearch).\
-                                filter(UserSearch.search_id == user_id).all()
+    user_hist = DBSession.query(UserSearch)\
+                         .filter(UserSearch.search_id == user_id).all()
 
     return {
         'user_hist': user_hist
@@ -108,29 +115,28 @@ def history_view(request):
              renderer = 'pyramid_app:templates/top.mako',
              permission = 'view')
 def top_search_view(request):
-    top_search = DBSession.query(UserSearch).\
-                        order_by(desc(UserSearch.search_quantity)).limit(3)
+    top_search = DBSession.query(UserSearch)\
+                          .order_by(desc(UserSearch.search_quantity)).limit(3)
 
     return {
         'top_search' : top_search
     }
 
 
-@view_config(route_name = 'login',
-             renderer = 'pyramid_app:templates/login.mako',
-             permission = NO_PERMISSION_REQUIRED)
+@view_config(
+    route_name = 'login',
+    renderer = 'pyramid_app:templates/login.mako',
+    permission = NO_PERMISSION_REQUIRED
+)
 def login_view(request):
 
     form = Form(request, schema = LoginForm)
 
     if request.method == 'POST' and form.validate():
 
-        user = DBSession.query(User).filter(
-                                and_(
-                                    User.username == form.data['login'],
-                                    User.password == form.data['password']
-                                )
-        ).first()
+        user = DBSession.query(User)\
+                        .filter(User.username == form.data['login'])\
+                        .filter(User.password == form.data['password']).first()
 
 
         headers = remember(request, user.id)
@@ -141,8 +147,10 @@ def login_view(request):
         }
 
 
-@view_config(route_name = 'logout',
-             renderer = 'pyramid_app:templates/base.mako')
+@view_config(
+    route_name = 'logout',
+    renderer = 'pyramid_app:templates/base.mako'
+)
 def logut_view(request):
     headers = forget(request)
 
@@ -151,9 +159,11 @@ def logut_view(request):
     )
 
 
-@view_config(route_name = 'register',
-             renderer = 'pyramid_app:templates/register.mako',
-             permission = NO_PERMISSION_REQUIRED)
+@view_config(
+    route_name = 'register',
+    renderer = 'pyramid_app:templates/register.mako',
+    permission = NO_PERMISSION_REQUIRED
+)
 def register_view(request):
     login = request.POST.get('login')
 
@@ -180,8 +190,10 @@ def register_view(request):
         }
 
 
-@view_config(route_name = 'user_list',
-             renderer = 'pyramid_app:templates/user_list.mako')
+@view_config(
+    route_name = 'user_list',
+    renderer = 'pyramid_app:templates/user_list.mako'
+)
 def user_list_view(request):
     """ ZROBIONE TYLKO W CELU PODGLADU ..
     """

@@ -37,7 +37,9 @@ class MatchUserName(FancyValidator):
 
 class MatchUserPassword(FancyValidator):
     def _to_python(self, value, state):
-        uname = DBSession.query(User).filter(User.password == value).first()
+        login = state.full_dict['login']
+        uname = DBSession.query(User).filter(User.password == value)\
+                                     .filter(User.username == login).first()
         if uname is None:
             raise Invalid('Invalid login data',uname, state)
         return value
